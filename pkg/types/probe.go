@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/binary"
+	"fmt"
 	"net"
 	"time"
 )
@@ -40,8 +41,28 @@ type ProbeGroup struct {
 	StartTime time.Time
 }
 
-func (pg ProbeGroup) Valid() bool {
-	return time.Now().Add(time.Second).After(pg.StartTime)
+func (pg ProbeGroup) AllProbesInOrder() bool {
+	if len(pg.Received) != len(pg.Sent) {
+		fmt.Println("not equal length:", len(pg.Received), len(pg.Sent))
+		return false
+	}
+	for i, probe := range pg.Sent {
+		expectedOrder := uint8(i)
+		if probe.Order != expectedOrder || pg.Received[i].Order != expectedOrder {
+			fmt.Println("bad order:", probe.Order, pg.Received[i].Order)
+			return false
+		}
+	}
+	return true
+}
+
+func (pg ProbeGroup) PrintDeltas() {
+	for i := range pg.Sent[:len(pg.Sent)-1] {
+		fmt.Printf("probe : %d \n", i)
+		fmt.Printf("round trip delay: %dus\n", (int64(pg.Received[i].Timestamp)-int64(pg.Sent[i].Timestamp))/1000)
+		fmt.Printf("%d to %d delay: %dms\n", i, i+1, (int64(pg.Received[i+1].Timestamp)-int64(pg.Received[i].Timestamp))/1000_000)
+	}
+	fmt.Print("\n\n")
 }
 
 func ParseProbe(rawData []byte) Probe {
