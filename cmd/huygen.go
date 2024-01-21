@@ -18,7 +18,9 @@ func main() {
 		fmt.Println("failed to start server")
 		panic(err)
 	}
-	c := controller.NewProbeController(conn, ch, peerIpAndPort)
+	p := controller.NewProbeTimeProcessor(int64(time.Millisecond * 160))
+	c := controller.NewProbeController(conn, ch, peerIpAndPort, p)
+	p.Run()
 	c.Run()
 
 	time.Sleep(time.Second * 1000)

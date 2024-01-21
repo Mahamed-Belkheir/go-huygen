@@ -59,10 +59,26 @@ func (pg ProbeGroup) AllProbesInOrder() bool {
 func (pg ProbeGroup) PrintDeltas() {
 	for i := range pg.Sent[:len(pg.Sent)-1] {
 		fmt.Printf("probe : %d \n", i)
-		fmt.Printf("round trip delay: %dus\n", (int64(pg.Received[i].Timestamp)-int64(pg.Sent[i].Timestamp))/1000)
-		fmt.Printf("%d to %d delay: %dms\n", i, i+1, (int64(pg.Received[i+1].Timestamp)-int64(pg.Received[i].Timestamp))/1000_000)
+		fmt.Printf("round trip delay: %dus\n", (int64(pg.Received[i].InitTime.UnixNano())-int64(pg.Sent[i].InitTime.UnixNano()))/1000)
+		fmt.Printf("%d to %d delay: %dms\n", i, i+1, (int64(pg.Received[i+1].InitTime.UnixNano())-int64(pg.Received[i].InitTime.UnixNano()))/1000_000)
 	}
 	fmt.Print("\n\n")
+}
+
+func (pg ProbeGroup) DeltaBetweenProbes() []int64 {
+	deltaBetweenProbes := []int64{}
+	for i := range pg.Sent[:len(pg.Sent)-1] {
+		deltaBetweenProbes = append(deltaBetweenProbes, (int64(pg.Received[i+1].InitTime.UnixNano()) - int64(pg.Received[i].InitTime.UnixNano())))
+	}
+	return deltaBetweenProbes
+}
+
+func (pg ProbeGroup) AverageOWDEstimateOfGroup() int64 {
+	var total int64 = 0
+	for i := range pg.Sent {
+		total += (int64(pg.Received[i].InitTime.UnixNano()) - int64(pg.Sent[i].InitTime.UnixNano())) / 2
+	}
+	return total / int64(len(pg.Received))
 }
 
 func ParseProbe(rawData []byte) Probe {
