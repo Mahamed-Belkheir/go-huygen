@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/Mahamed-Belkheir/go-huygen/pkg/controller"
 	"github.com/Mahamed-Belkheir/go-huygen/pkg/network"
+	"github.com/Mahamed-Belkheir/go-huygen/pkg/variables"
 )
 
 func main() {
@@ -18,10 +18,10 @@ func main() {
 		fmt.Println("failed to start server")
 		panic(err)
 	}
-	p := controller.NewProbeTimeProcessor(int64(time.Millisecond * 160))
+	p := controller.NewProbeTimeProcessor(variables.MAX_PROBE_DELAY)
 	c := controller.NewProbeController(conn, ch, peerIpAndPort, p)
 	p.Run()
 	c.Run()
 
-	time.Sleep(time.Second * 1000)
+	select {}
 }

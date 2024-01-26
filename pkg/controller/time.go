@@ -45,19 +45,20 @@ func (p ProbeTimeProcessor) Run() {
 }
 
 func (p ProbeTimeProcessor) processProbeGroups() {
+processLoop:
 	for {
 		pg := <-p.parsedGroups
 		if !pg.AllProbesInOrder() {
 			p.stats.invalidGroups += 1
 			fmt.Println("got invalid group order")
-			continue
+			continue processLoop
 		}
 		deltas := pg.DeltaBetweenProbes()
 		for _, d := range deltas {
 			if d > p.maxDelayBetweenProbes {
 				p.stats.invalidGroups += 1
 				fmt.Println("got invalid group delay", d, p.maxDelayBetweenProbes)
-				continue
+				continue processLoop
 			}
 		}
 		p.stats.validGroups += 1
