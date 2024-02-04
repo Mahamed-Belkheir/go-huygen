@@ -49,7 +49,8 @@ func (p ProbeController) handleProbes() {
 			if !ok {
 				fmt.Println("setup group")
 				pg = &types.ProbeGroup{
-					Id: probe.GroupId,
+					Id:        probe.GroupId,
+					StartTime: probe.InitTime,
 				}
 				p.trackedProbes[probe.GroupId] = pg
 			}

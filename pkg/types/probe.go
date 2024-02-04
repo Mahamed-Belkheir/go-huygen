@@ -1,9 +1,11 @@
 package types
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"net"
+	"strconv"
 	"time"
 )
 
@@ -81,6 +83,15 @@ func (pg ProbeGroup) AverageOWDEstimateOfGroup() int64 {
 	return total / int64(len(pg.Received))
 }
 
+func (pg ProbeGroup) AverageTimeDifference() int64 {
+	var total int64 = 0
+	for i := range pg.Sent {
+		recvProbe, sentProbe := pg.Received[i], pg.Sent[i]
+		total += int64(recvProbe.Timestamp) - ((int64(recvProbe.InitTime.UnixNano()) - int64(sentProbe.InitTime.UnixNano())) / 2) - int64(sentProbe.Timestamp)
+	}
+	return total / int64(len(pg.Received))
+}
+
 func ParseProbe(rawData []byte) Probe {
 	return Probe{
 		GroupId:   binary.LittleEndian.Uint16(rawData[0:2]),
@@ -96,4 +107,34 @@ func CreateSerializedProbe(groupId uint16, pType, order uint8, timestamp uint64)
 	data = append(data, pType, order)
 	data = binary.LittleEndian.AppendUint64(data, timestamp)
 	return data
+}
+
+/*
+*
+id, startTime, peer, average timedifference, average OWD estimate, probe_sent_1_timestamp, probe_sent_1_init_time, probe_recv_1_timestamp, probe_recv_1_recvtime
+*
+*/
+func (pg ProbeGroup) ToCSVLine() []byte {
+	var buf bytes.Buffer
+	buf.WriteString(strconv.FormatUint(uint64(pg.Id), 10))
+	buf.WriteRune(',')
+	buf.WriteString(strconv.FormatInt(pg.StartTime.UnixNano(), 10))
+	buf.WriteRune(',')
+	buf.WriteString(pg.Received[0].Peer.String())
+	buf.WriteRune(',')
+	buf.WriteString(strconv.FormatInt(pg.AverageTimeDifference(), 10))
+	buf.WriteRune(',')
+	buf.WriteString(strconv.FormatInt(pg.AverageOWDEstimateOfGroup(), 10))
+	for i := range pg.Sent {
+		buf.WriteRune(',')
+		buf.WriteString(strconv.FormatInt(int64(pg.Sent[i].Timestamp), 10))
+		buf.WriteRune(',')
+		buf.WriteString(strconv.FormatInt(pg.Sent[i].InitTime.UnixNano(), 10))
+		buf.WriteRune(',')
+		buf.WriteString(strconv.FormatInt(int64(pg.Received[i].Timestamp), 10))
+		buf.WriteRune(',')
+		buf.WriteString(strconv.FormatInt(pg.Received[i].InitTime.UnixNano(), 10))
+	}
+	buf.WriteRune('\n')
+	return buf.Bytes()
 }

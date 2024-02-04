@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Mahamed-Belkheir/go-huygen/pkg/controller"
+	"github.com/Mahamed-Belkheir/go-huygen/pkg/data"
 	"github.com/Mahamed-Belkheir/go-huygen/pkg/network"
 	"github.com/Mahamed-Belkheir/go-huygen/pkg/types"
 	"github.com/Mahamed-Belkheir/go-huygen/pkg/variables"
@@ -20,6 +21,9 @@ func main() {
 		panic(err)
 	}
 
+	collector := data.NewProbeProbeCollector(ownIpAndPort)
+	collector.Run()
+
 	peerChannels := make(map[string]chan types.Probe, 1024)
 
 	for _, peerIpAndPort := range peers {
@@ -27,7 +31,7 @@ func main() {
 		peerChannels[peerIpAndPort] = ch
 		go func(peerIpAndPort string) {
 			fmt.Println("setting up peer at:", peerIpAndPort)
-			p := controller.NewProbeTimeProcessor(variables.MAX_PROBE_DELAY)
+			p := controller.NewProbeTimeProcessor(variables.MAX_PROBE_DELAY, collector)
 			c := controller.NewProbeController(conn, ch, peerIpAndPort, p)
 			p.Run()
 			c.Run()

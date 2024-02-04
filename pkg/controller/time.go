@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 
+	"github.com/Mahamed-Belkheir/go-huygen/pkg/data"
 	"github.com/Mahamed-Belkheir/go-huygen/pkg/types"
 )
 
@@ -17,9 +18,10 @@ type ProbeTimeProcessor struct {
 	started               bool
 	maxDelayBetweenProbes int64
 	stats                 ProbeTimeStats
+	collector             *data.ProbeCollector
 }
 
-func NewProbeTimeProcessor(maxDelayBetweenProbes int64) *ProbeTimeProcessor {
+func NewProbeTimeProcessor(maxDelayBetweenProbes int64, collector *data.ProbeCollector) *ProbeTimeProcessor {
 	return &ProbeTimeProcessor{
 		parsedGroups:          make(chan *types.ProbeGroup, 1024),
 		started:               false,
@@ -29,6 +31,7 @@ func NewProbeTimeProcessor(maxDelayBetweenProbes int64) *ProbeTimeProcessor {
 			invalidGroups:   0,
 			lastOWDEstimate: 0,
 		},
+		collector: collector,
 	}
 }
 
@@ -64,5 +67,6 @@ processLoop:
 		p.stats.validGroups += 1
 		p.stats.lastOWDEstimate = pg.AverageOWDEstimateOfGroup()
 		fmt.Printf("new OWD estimate %dus \n", p.stats.lastOWDEstimate/1000)
+		p.collector.Send(pg)
 	}
 }
