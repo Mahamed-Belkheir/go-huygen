@@ -111,6 +111,7 @@ func CreateSerializedProbe(groupId uint16, pType, order uint8, timestamp uint64)
 
 /*
 *
+0	1			2		3						4					5						6						7						8
 id, startTime, peer, average timedifference, average OWD estimate, probe_sent_1_timestamp, probe_sent_1_init_time, probe_recv_1_timestamp, probe_recv_1_recvtime
 *
 */
