@@ -3,9 +3,10 @@ package lrpc
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"net"
 	"time"
+
+	"github.com/Mahamed-Belkheir/go-huygen/pkg/udpt"
 )
 
 const messageSize = 64000
@@ -19,12 +20,12 @@ type Packet struct {
 
 type Gateway struct {
 	id                uint16
-	udpConn           net.UDPConn
+	udpConn           udpt.UDPTConn
 	responseListeners map[uint16]chan Packet
 	commandListeners  map[string]chan Packet
 }
 
-func NewGateway(udpConn net.UDPConn) Gateway {
+func NewGateway(udpConn udpt.UDPTConn) Gateway {
 	g := Gateway{
 		0,
 		udpConn,
@@ -65,20 +66,19 @@ func (g *Gateway) RequestWithResponse(target string, name string, payload []byte
 
 func (g *Gateway) AddListener(name string, cb func(Packet) *Packet) {
 	ch := make(chan Packet, 10)
+	g.commandListeners[name] = ch
 	go func() {
 		for {
 			packet := <-ch
 			response := cb(packet)
 			if response != nil {
-				g.SendResponse(packet)
+				go g.SendResponse(*response)
 			}
 		}
 	}()
-	g.commandListeners[name] = ch
 }
 
 func (g *Gateway) SendResponse(packet Packet) error {
-	fmt.Println("sending response")
 	addr, err := net.ResolveUDPAddr("udp", packet.Source)
 	if err != nil {
 		return err
@@ -117,14 +117,12 @@ func (g *Gateway) listenForMessages() {
 		}
 		p := ParsePayload(messageBuffer, addr)
 		if p.Command == "Response" {
-			fmt.Println("got response", p.ID, g.responseListeners)
 			g.responseListeners[p.ID] <- p
 		} else {
 			ch, ok := g.commandListeners[p.Command]
 			if !ok {
 				continue
 			}
-			fmt.Println("got ch")
 			ch <- p
 		}
 	}

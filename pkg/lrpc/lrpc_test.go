@@ -6,6 +6,7 @@ import (
 
 	"github.com/Mahamed-Belkheir/go-huygen/pkg/lrpc"
 	"github.com/Mahamed-Belkheir/go-huygen/pkg/network"
+	"github.com/Mahamed-Belkheir/go-huygen/pkg/udpt"
 )
 
 // func TestSerialization(t *testing.T) {
@@ -35,8 +36,8 @@ func TestLrpc(t *testing.T) {
 		panic(err)
 	}
 
-	serverGateway := lrpc.NewGateway(*serverConn)
-	clientGateway := lrpc.NewGateway(*clientConn)
+	serverGateway := lrpc.NewGateway(udpt.NewUDPTConn(serverConn))
+	clientGateway := lrpc.NewGateway(udpt.NewUDPTConn(clientConn))
 
 	serverGateway.AddListener("TestFunc", func(p lrpc.Packet) *lrpc.Packet {
 		fmt.Println(p.Source)
