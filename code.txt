@@ -1,0 +1,59 @@
+FUNCTION CreateGraph(nodeList)
+    graph = new Graph()
+    FOR EACH node in nodeList
+        graph.addNode(node.data)
+        FOR EACH peer in node.peers
+        graph.addEdge(node.data, peer)
+    END FOR
+
+    RETURN graph
+END FUNCTION
+
+
+FUNCTION FindAndSpreadSurplus(graph)
+
+  totalWeight = 0
+  edgeCount = 0
+
+  FOR EACH node, edges in graph.nodes
+      FOR EACH target, weight in edges
+          totalWeight += weight
+          edgeCount += 1
+  END FOR
+
+  IF edgeCount == 0
+      RETURN
+
+  averageWeight = totalWeight / edgeCount
+
+  surplus = 0
+
+  FOR EACH node, edges in graph.nodes
+      FOR i = 0 TO edgeCount - 1
+          target, weight = edges[i]
+          surplus += MAX(0, weight - averageWeight)
+      END FOR
+  END FOR
+
+  FOR EACH node, edges in graph.nodes
+      FOR i = 0 TO edgeCount - 1
+          target, weight = edges[i]
+          edges[i] = (target, weight + surplus / edgeCount)
+      END FOR
+  END FOR
+END FUNCTION
+
+
+FUNCTION CalculateTimeOffset(probe1SentTime, probe1ReceivedTime, probe2SentTime, probe2ReceivedTime)
+  probe1Rtt = probe1ReceivedTime - probe1SentTime
+  probe2Rtt = probe2ReceivedTime - probe2SentTime
+  estimatedOffset = (probe1Rtt + probe2Rtt) / 2
+  RETURN estimatedOffset
+END FUNCTION
+
+
+FUNCTION cetClockOffset(t1, t2, r1, r2, pt1, pt2)
+	o1 = ((pt1 - t1) + (pt1 - r1)) / 2
+	o2 = ((pt2 - t2) + (pt2 - r2)) / 2
+	RETURN (o1 + o2) / 2
+END FUNCTION

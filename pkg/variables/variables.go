@@ -23,3 +23,7 @@ func GetPeers() []string {
 func GetListeningAddress() string {
 	return os.Getenv("HUYGEN_ADDRESS")
 }
+
+func GetSensorAddress() string {
+	return os.Getenv("HUYGEN_SENSOR_ADDRESS")
+}

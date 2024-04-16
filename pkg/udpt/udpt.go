@@ -64,8 +64,12 @@ func (u *UDPTConn) WriteToUDP(b []byte, addr *net.UDPAddr) (int, error) {
 		if rand.Float64() < u.packetLoss {
 			return len(b), nil
 		}
-		latency := baseLatency + int(rand.Float64()*float64(baseLatency)*u.jitter)
-		time.Sleep(time.Millisecond * time.Duration(latency))
+		go func() {
+			latency := baseLatency + int(rand.Float64()*float64(baseLatency)*u.jitter)
+			time.Sleep(time.Millisecond * time.Duration(latency))
+			u.realConn.WriteToUDP(b, addr)
+		}()
+		return len(b), nil
 	}
 	return u.realConn.WriteToUDP(b, addr)
 }

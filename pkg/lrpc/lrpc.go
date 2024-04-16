@@ -25,8 +25,8 @@ type Gateway struct {
 	commandListeners  map[string]chan Packet
 }
 
-func NewGateway(udpConn udpt.UDPTConn) Gateway {
-	g := Gateway{
+func NewGateway(udpConn udpt.UDPTConn) *Gateway {
+	g := &Gateway{
 		0,
 		udpConn,
 		make(map[uint16]chan Packet),

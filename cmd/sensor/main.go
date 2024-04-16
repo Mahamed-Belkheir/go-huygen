@@ -15,20 +15,22 @@ import (
 )
 
 func main() {
-	conn, err := network.StartConnection(variables.GetListeningAddress())
+	addr := variables.GetListeningAddress()
+	conn, err := network.StartConnection(addr)
 	if err != nil {
 		panic(err)
 	}
 
 	lrpcGW := lrpc.NewGateway(udpt.NewUDPTConn(conn))
 
+	fmt.Println("starting sensor at", addr)
+
 	lrpcGW.AddListener("PROBE", func(p lrpc.Packet) *lrpc.Packet {
 		t := timet.GetTime()
 		data := []byte{}
 		data = binary.LittleEndian.AppendUint64(data, t)
 		p.Payload = data
-		copy := p
-		return &copy
+		return &p
 	})
 
 	lrpcGW.AddListener("START_PROBE", func(p lrpc.Packet) *lrpc.Packet {
@@ -55,7 +57,7 @@ func main() {
 		wg.Wait()
 
 		if err1 != nil || err2 != nil {
-			fmt.Println(err)
+			fmt.Println(err1, err2)
 			return nil
 		}
 
@@ -73,14 +75,19 @@ func main() {
 			return nil
 		}
 		p.Payload = data
-		fmt.Println("done probing")
 		return &p
 	})
+
+	go func() {
+		for {
+			time.Sleep(time.Second * 5)
+		}
+	}()
 
 	select {}
 }
 
-func callProbe(target string, lrpcGW lrpc.Gateway) (uint64, uint64, uint64, error) {
+func callProbe(target string, lrpcGW *lrpc.Gateway) (uint64, uint64, uint64, error) {
 	t := timet.GetTime()
 	response, err := lrpcGW.RequestWithResponse(target, "PROBE", []byte{})
 
